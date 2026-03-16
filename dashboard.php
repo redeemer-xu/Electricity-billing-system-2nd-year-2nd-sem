@@ -57,3 +57,21 @@ require_once "includes/session_check.php";
           <p class="text-muted small">Edit customer details</p>
         </div>
       </a>
+    </div>
+
+    <!-- DELETE CARD — this was the missing one -->
+    <div class="col-md-3 col-sm-6">
+      <a href="customers/delete.php" class="text-decoration-none">
+        <div class="card text-center p-4 h-100 border-danger">
+          <div class="fs-1">🗑️</div>
+          <h6 class="mt-2">Delete Customer</h6>
+          <p class="text-muted small">Remove a customer record</p>
+        </div>
+      </a>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

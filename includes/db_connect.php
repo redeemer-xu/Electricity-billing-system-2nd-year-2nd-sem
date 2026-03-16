@@ -1,10 +1,5 @@
 <?php
-$host     = "localhost:3307";
-$dbname   = "electricity_db";
-$username = "root";
-$password = "";
-
-$conn = new mysqli($host, $username, $password, $dbname);
+$conn = new mysqli("127.0.0.1", "root", "", "electricity_db", 3307);
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
