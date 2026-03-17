@@ -69,6 +69,17 @@ require_once "includes/session_check.php";
         </div>
       </a>
     </div>
+    
+    <div class="col-md-3 col-sm-6">
+      <a href="customers/add_bill.php" class="text-decoration-none">
+        <div class="card text-center p-4 h-100 border-info">
+          <div class="fs-1">⚡</div>
+          <h6 class="mt-2">Add Bill</h6>
+          <p class="text-muted small">Add monthly bill for existing customer</p>
+        </div>
+      </a>
+    </div>
+</div>
 
   </div>
 </div>

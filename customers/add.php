@@ -10,34 +10,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $address      = trim($_POST['address']);
     $meter_number = trim($_POST['meter_number']);
     $contact      = trim($_POST['contact']);
-    $kwh          = trim($_POST['kwh_consumed']);
 
-    // Validate inputs
-    if (empty($name) || empty($address) || empty($meter_number) || empty($kwh)) {
+    if (empty($name) || empty($address) || empty($meter_number)) {
         $error = "There is something wrong. Please fill in all required fields.";
-    } elseif (!is_numeric($kwh) || $kwh <= 0) {
-        $error = "There is something wrong. kWh must be a valid positive number.";
     } else {
-        // Calculate bill — ₱11.00 per kWh (Philippine rate)
-        $rate       = 11.00;
-        $amount_due = $kwh * $rate;
-        $bill_date  = date('Y-m-d');
+        // Check if meter number already exists
+        $check = $conn->prepare("SELECT id FROM customers WHERE meter_number = ?");
+        $check->bind_param("s", $meter_number);
+        $check->execute();
+        $check->store_result();
 
-        // Insert into customers table
-        $stmt = $conn->prepare("INSERT INTO customers (name, address, meter_number, contact) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("ssss", $name, $address, $meter_number, $contact);
-
-        if ($stmt->execute()) {
-            $customer_id = $conn->insert_id; // get the new customer's ID
-
-            // Insert into bills table
-            $stmt2 = $conn->prepare("INSERT INTO bills (customer_id, kwh_consumed, amount_due, billing_date) VALUES (?, ?, ?, ?)");
-            $stmt2->bind_param("idds", $customer_id, $kwh, $amount_due, $bill_date);
-            $stmt2->execute();
-
-            $success = "Customer added successfully! Bill of ₱" . number_format($amount_due, 2) . " has been calculated.";
+        if ($check->num_rows > 0) {
+            $error = "There is something wrong. That meter number is already registered.";
         } else {
-            $error = "There is something wrong. Meter number may already exist.";
+            $stmt = $conn->prepare("INSERT INTO customers (name, address, meter_number, contact) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("ssss", $name, $address, $meter_number, $contact);
+
+            if ($stmt->execute()) {
+                $success = "Customer registered successfully!";
+            } else {
+                $error = "There is something wrong. Please try again.";
+            }
         }
     }
 }
@@ -64,11 +57,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <div class="col-md-6">
       <div class="card shadow-sm">
         <div class="card-body p-4">
-          <h5 class="mb-4">➕ Add New Customer</h5>
+          <h5 class="mb-4">➕ Register New Customer</h5>
 
           <?php if ($success): ?>
             <div class="alert alert-success"><?php echo $success; ?></div>
-            <a href="../dashboard.php" class="btn btn-primary w-100">Return to Dashboard</a>
+            <a href="add_bill.php" class="btn btn-primary w-100 mb-2">Add Bill for This Customer</a>
+            <a href="../dashboard.php" class="btn btn-secondary w-100">Return to Dashboard</a>
           <?php else: ?>
 
             <?php if ($error): ?>
@@ -92,12 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <label class="form-label">Contact Number</label>
                 <input type="text" name="contact" class="form-control">
               </div>
-              <div class="mb-3">
-                <label class="form-label">kWh Consumed <span class="text-danger">*</span></label>
-                <input type="number" name="kwh_consumed" class="form-control" step="0.01" min="0" required>
-                <div class="form-text">Rate: ₱11.00 per kWh</div>
-              </div>
-              <button type="submit" class="btn btn-primary w-100">Add Customer & Calculate Bill</button>
+              <button type="submit" class="btn btn-primary w-100">Register Customer</button>
             </form>
 
           <?php endif; ?>
