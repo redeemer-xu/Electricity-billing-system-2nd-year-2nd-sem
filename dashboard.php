@@ -79,6 +79,18 @@ require_once "includes/session_check.php";
         </div>
       </a>
     </div>
+
+    <div class="col-md-3 col-sm-6">
+      <a href="settings.php" class="text-decoration-none">
+        <div class="card text-center p-4 h-100 border-secondary">
+          <div class="fs-1">⚙️</div>
+          <h6 class="mt-2">Settings</h6>
+          <p class="text-muted small">Set electricity rate per kWh</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
 </div>
 
   </div>

@@ -32,6 +32,7 @@ $result = $conn->query("
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>View Customers — Electricity Billing</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../css/style.css">
 </head>
 <body class="bg-light">
 

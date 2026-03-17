@@ -5,6 +5,10 @@ require_once "../includes/db_connect.php";
 $success = "";
 $error   = "";
 
+// Get rate from settings table
+$rate_result = $conn->query("SELECT setting_value FROM settings WHERE setting_key = 'rate_per_kwh'");
+$rate        = floatval($rate_result->fetch_assoc()['setting_value']);
+
 // Fetch all customers for the dropdown
 $customers = $conn->query("SELECT id, name, meter_number FROM customers ORDER BY name ASC");
 
@@ -18,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } elseif (!is_numeric($kwh) || $kwh <= 0) {
         $error = "There is something wrong. kWh must be a valid positive number.";
     } else {
-        // Check if this customer already has a bill for that month
+        // Check if this customer already has a bill for that date
         $check = $conn->prepare("SELECT id FROM bills WHERE customer_id = ? AND billing_date = ?");
         $check->bind_param("is", $customer_id, $bill_date);
         $check->execute();
@@ -27,7 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($check->num_rows > 0) {
             $error = "There is something wrong. This customer already has a bill for that date.";
         } else {
-            $rate       = 11.00;
             $amount_due = $kwh * $rate;
 
             $stmt = $conn->prepare("INSERT INTO bills (customer_id, kwh_consumed, amount_due, billing_date) VALUES (?, ?, ?, ?)");
@@ -40,8 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $c->execute();
                 $cname = $c->get_result()->fetch_assoc()['name'];
 
-                $success = "Bill added for <strong>" . htmlspecialchars($cname) . "</strong>! 
-                            Amount due: <strong>₱" . number_format($amount_due, 2) . "</strong>";
+                $success = "Bill added for <strong>" . htmlspecialchars($cname) . "</strong>!
+                            Amount due: <strong>₱" . number_format($amount_due, 2) . "</strong>
+                            at ₱" . number_format($rate, 2) . " per kWh.";
             } else {
                 $error = "There is something wrong. Please try again.";
             }
@@ -56,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Add Bill — Electricity Billing</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../css/style.css">
 </head>
 <body class="bg-light">
 
@@ -78,6 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <a href="add_bill.php" class="btn btn-primary w-100 mb-2">Add Another Bill</a>
             <a href="view.php" class="btn btn-success w-100 mb-2">View All Customers</a>
             <a href="../dashboard.php" class="btn btn-secondary w-100">Return to Dashboard</a>
+
           <?php else: ?>
 
             <?php if ($error): ?>
@@ -91,26 +97,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <select name="customer_id" class="form-select" required>
                   <option value="">— Choose a customer —</option>
                   <?php
-                  // Reset pointer in case it was used above
                   $customers->data_seek(0);
                   while ($c = $customers->fetch_assoc()): ?>
                     <option value="<?php echo $c['id']; ?>">
-                      <?php echo htmlspecialchars($c['name']); ?> 
+                      <?php echo htmlspecialchars($c['name']); ?>
                       (Meter: <?php echo htmlspecialchars($c['meter_number']); ?>)
                     </option>
                   <?php endwhile; ?>
                 </select>
               </div>
+
               <div class="mb-3">
                 <label class="form-label">Billing Date <span class="text-danger">*</span></label>
                 <input type="date" name="billing_date" class="form-control"
                        value="<?php echo date('Y-m-d'); ?>" required>
               </div>
+
               <div class="mb-3">
                 <label class="form-label">kWh Consumed <span class="text-danger">*</span></label>
-                <input type="number" name="kwh_consumed" class="form-control"
-                       step="0.01" min="0.01" required>
-                <div class="form-text">Rate: ₱11.00 per kWh</div>
+                <input type="number" name="kwh_consumed" id="kwh_input"
+                       class="form-control" step="0.01" min="0.01" required>
+                <div class="form-text">
+                  Current rate: <strong>₱<?php echo number_format($rate, 2); ?></strong> per kWh
+                </div>
               </div>
 
               <!-- Live bill preview -->
@@ -120,8 +129,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
               <button type="submit" class="btn btn-primary w-100">Save Bill</button>
             </form>
+
             <?php else: ?>
-              <div class="alert alert-warning">No customers registered yet. 
+              <div class="alert alert-warning">No customers registered yet.
                 <a href="add.php">Register a customer first</a>.
               </div>
             <?php endif; ?>
@@ -134,20 +144,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </div>
 
 <script>
-// Live bill calculator
-document.querySelector('input[name="kwh_consumed"]')?.addEventListener('input', function() {
-    const kwh    = parseFloat(this.value) || 0;
-    const rate   = 11.00;
-    const amount = kwh * rate;
+// Rate is pulled from the database via PHP — never hardcoded
+const rate = <?php echo $rate; ?>;
+
+document.getElementById('kwh_input')?.addEventListener('input', function() {
+    const kwh     = parseFloat(this.value) || 0;
+    const amount  = kwh * rate;
     const preview = document.getElementById('preview');
     const amountEl = document.getElementById('preview-amount');
+
     if (kwh > 0) {
-        amountEl.textContent = '₱' + amount.toLocaleString('en-PH', {minimumFractionDigits: 2});
+        amountEl.textContent = '₱' + amount.toLocaleString('en-PH', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
         preview.classList.remove('d-none');
     } else {
         preview.classList.add('d-none');
     }
 });
 </script>
+
 </body>
 </html>

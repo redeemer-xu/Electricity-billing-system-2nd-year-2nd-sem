@@ -42,12 +42,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Login — Electricity Billing</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-light">
+<body class="login-page">
 <div class="container">
   <div class="row justify-content-center mt-5">
     <div class="col-md-4">
-      <div class="card shadow-sm">
+      <div class="card login-card">
         <div class="card-body p-4">
           <h4 class="text-center mb-1">⚡ Electricity Billing</h4>
           <p class="text-center text-muted mb-4">Sign in to continue</p>
